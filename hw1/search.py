@@ -120,9 +120,10 @@ def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
     frontier, s = PriorityQueue(), problem.getStartState()
-    path, explored = [(s,'',0)], []
+    path, explored, cost = [(s,'',0)], [], {}
     priority = lambda pth: reduce(lambda x,y: x+y, map(lambda state: state[2],pth))
     frontier.push(path, priority(path))
+    # path_cost[s] = priority(path)
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -133,6 +134,11 @@ def uniformCostSearch(problem):
             next_path = path+[neighbor]
             if neighbor[0] not in explored:
                 frontier.push(next_path,priority(next_path))
+            #     path_cost[neighbor] = priority(next_path)
+            # elif priority(next_path) < path_cost[neighbor]:
+            #     print 'hi'
+            #     frontier.push(next_path,priority(next_path))
+            #     path_cost[neighbor] = priority(next_path)
 
 def nullHeuristic(state, problem=None):
     """
@@ -144,7 +150,20 @@ def nullHeuristic(state, problem=None):
 def aStarSearch(problem, heuristic=nullHeuristic):
     "Search the node that has the lowest combined cost and heuristic first."
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier, s = PriorityQueue(), problem.getStartState()
+    path, explored, cost = [(s,'',0)], [], {}
+    priority = lambda pth: reduce(lambda x,y: x+y, map(lambda state: state[2],pth))+heuristic(pth[-1][0],problem)
+    frontier.push(path, priority(path))
+    while not frontier.isEmpty():
+        path = frontier.pop()
+        p_last = path[-1][0]
+        if problem.isGoalState(p_last):
+            return [state[1] for state in path[1:]]
+        explored.append(p_last)
+        for neighbor in problem.getSuccessors(p_last):
+            next_path = path+[neighbor]
+            if neighbor[0] not in explored:
+                frontier.push(next_path,priority(next_path))
 
 
 # Abbreviations
