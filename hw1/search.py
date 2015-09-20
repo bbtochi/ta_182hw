@@ -85,9 +85,8 @@ def depthFirstSearch(problem):
     """
 
     "*** YOUR CODE HERE ***"
-    frontier, s = Stack(), problem.getStartState()
+    frontier, explored, s = Stack(), [], problem.getStartState()
     frontier.push([(s,'',0)])
-    added, explored = [[(s,'',0)]], [(s,'',0)]
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -95,21 +94,18 @@ def depthFirstSearch(problem):
             return [state[1] for state in path[1:]]
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
-            nxt = neighbor
-            if nxt[0] not in explored:
-                # if path+[nxt] not in added:
-                added.append(path+[nxt])
-                frontier.push(path+[nxt])
+            if neighbor[0] not in explored:
+                frontier.push(path+[neighbor])
 
 def breadthFirstSearch(problem):
     """
     Search the shallowest nodes in the search tree first.
     [2nd Edition: p 73, 3rd Edition: p 82]
     """
+
     "*** YOUR CODE HERE ***"
-    frontier, s = Queue(), problem.getStartState()
+    frontier, explored, s = Queue(), [], problem.getStartState()
     frontier.push([(s,'',0)])
-    added, explored = [[(s,'',0)]], [(s,'',0)]
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -117,16 +113,26 @@ def breadthFirstSearch(problem):
             return [state[1] for state in path[1:]]
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
-            nxt = neighbor
-            if nxt[0] not in explored:
-                # if path+[nxt] not in added:
-                added.append(path+[nxt])
-                frontier.push(path+[nxt])
+            if neighbor[0] not in explored:
+                frontier.push(path+[neighbor])
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
-    util.raiseNotDefined()
+    frontier, s = PriorityQueue(), problem.getStartState()
+    path, explored = [(s,'',0)], []
+    priority = lambda pth: reduce(lambda x,y: x+y, map(lambda state: state[2],pth))
+    frontier.push(path, priority(path))
+    while not frontier.isEmpty():
+        path = frontier.pop()
+        p_last = path[-1][0]
+        if problem.isGoalState(p_last):
+            return [state[1] for state in path[1:]]
+        explored.append(p_last)
+        for neighbor in problem.getSuccessors(p_last):
+            next_path = path+[neighbor]
+            if neighbor[0] not in explored:
+                frontier.push(next_path,priority(next_path))
 
 def nullHeuristic(state, problem=None):
     """
