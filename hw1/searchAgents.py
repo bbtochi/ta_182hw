@@ -465,6 +465,7 @@ def foodHeuristic(state, problem):
     tree = [position]
     cost = 0
 
+    # we implemented a minmum spnning tree (MTS) using Prim's Algorithm
     while len(tree) < len(foodGrid.asList()):
         for food in foodGrid.asList():
             if food in tree:
