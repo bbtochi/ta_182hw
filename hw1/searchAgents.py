@@ -360,7 +360,18 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    return 0 # Default to trivial solution
+    corners_left = list(state[1])
+    x1,y1 = state[0]
+    cost = 0
+    while corners_left != []:
+        dist = map(lambda corner: abs(x1 - corner[0]) + abs(y1 - corner[1]), corners_left)
+        minimum = dist[0]
+        for c in dist:
+            if c <= minimum: minimum = c
+        cost += minimum
+        x1,y1 = corners_left.pop(dist.index(minimum))
+    return cost
+
 
 class AStarCornersAgent(SearchAgent):
     "A SearchAgent for FoodSearchProblem using A* and your foodHeuristic"
@@ -452,26 +463,27 @@ def foodHeuristic(state, problem):
     position, foodGrid = state
 
     tree = [position]
-    curr_cost = 0
+    cost = 0
 
-    for elt in foodGrid.asList():
-        x1,y1 = elt
+    while len(tree) < len(foodGrid.asList()):
+        for food in foodGrid.asList():
+            if food in tree:
+                continue
 
-        lowest_dist = 9999
+            x1,y1 = food
+            min_dist = 9999
+            next_node = None
+            for elt in tree:
+                x2,y2 = elt
+                dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
+                if dist < min_dist: 
+                    min_dist = dist
+                    next_node = elt
+            cost += min_dist
+            tree.append(next_node)
+            break
+    return cost
 
-        for node in tree:
-            x2,y2 = node
-
-            dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
-
-            if dist < lowest_dist:
-                lowest_dist = dist
-
-        curr_cost += lowest_dist
-        tree.append(elt)
-    # print('current cost: ' + str(curr_cost))
-    "*** YOUR CODE HERE ***"
-    return curr_cost
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
