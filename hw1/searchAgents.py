@@ -462,28 +462,39 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
 
-    tree = [position]
+    tree = []
     cost = 0
 
-    # we implemented a minmum spnning tree (MTS) using Prim's Algorithm
-    while len(tree) < len(foodGrid.asList()):
+    # we implemented a minimum spanning tree (MST) using Prim's Algorithm
+    while len(tree) < len(foodGrid.asList())+1:
+        if tree == []:
+            if foodGrid.asList() != []:
+                tree.append(foodGrid.asList()[0])
+            else: break
+
+        min_dist = 9999
+        next_node = None
+
         for food in foodGrid.asList():
             if food in tree:
                 continue
 
             x1,y1 = food
-            min_dist = 9999
-            next_node = None
+
             for elt in tree:
                 x2,y2 = elt
                 dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
                 if dist < min_dist: 
                     min_dist = dist
-                    next_node = elt
-            cost += min_dist
-            tree.append(next_node)
-            break
+                    next_node = food
+
+        cost += min_dist
+        tree.append(next_node)
+            # break
+    # print(cost)
     return cost
+
+
 
 
 class ClosestDotSearchAgent(SearchAgent):
