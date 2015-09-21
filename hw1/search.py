@@ -109,12 +109,14 @@ def breadthFirstSearch(problem):
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
+        # print(p_last)
         if problem.isGoalState(p_last):
+            # print([state[1] for state in path[1:]])
             return [state[1] for state in path[1:]]
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
-            if neighbor[0] not in explored:
-                frontier.push(path+[neighbor])
+            if neighbor[0] not in explored: frontier.push(path+[neighbor])
+
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "

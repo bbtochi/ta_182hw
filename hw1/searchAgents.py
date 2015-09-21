@@ -35,6 +35,7 @@ import util
 import time
 import search
 import searchAgents
+import math
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -286,6 +287,7 @@ class CornersProblem(search.SearchProblem):
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
         "*** YOUR CODE HERE ***"
+        print(state[1])
         return len(state[1])==0
 
     def getSuccessors(self, state):
@@ -310,7 +312,7 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
-            pos, corners = state[0], state[1]
+            pos, corners = state[0], list(state[1])
             x,y = pos
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
@@ -448,8 +450,28 @@ def foodHeuristic(state, problem):
     Subsequent calls to this heuristic can access problem.heuristicInfo['wallCount']
     """
     position, foodGrid = state
+
+    tree = [position]
+    curr_cost = 0
+
+    for elt in foodGrid.asList():
+        x1,y1 = elt
+
+        lowest_dist = 9999
+
+        for node in tree:
+            x2,y2 = node
+
+            dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
+
+            if dist < lowest_dist:
+                lowest_dist = dist
+
+        curr_cost += lowest_dist
+        tree.append(elt)
+    # print('current cost: ' + str(curr_cost))
     "*** YOUR CODE HERE ***"
-    return 0
+    return curr_cost
 
 class ClosestDotSearchAgent(SearchAgent):
     "Search for all food using a sequence of searches"
@@ -476,8 +498,7 @@ class ClosestDotSearchAgent(SearchAgent):
         walls = gameState.getWalls()
         problem = AnyFoodSearchProblem(gameState)
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return search.aStarSearch(problem)
 
 class AnyFoodSearchProblem(PositionSearchProblem):
     """
@@ -512,8 +533,8 @@ class AnyFoodSearchProblem(PositionSearchProblem):
         """
         x,y = state
 
-        "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.food[x][y]
+
 
 ##################
 # Mini-contest 1 #
