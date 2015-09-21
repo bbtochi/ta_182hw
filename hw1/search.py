@@ -86,7 +86,7 @@ def depthFirstSearch(problem):
 
     "*** YOUR CODE HERE ***"
     frontier, explored, s = Stack(), [], problem.getStartState()
-    frontier.push([(s,'',0)])
+    frontier.push([(s,'Stop',0)])
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -105,27 +105,31 @@ def breadthFirstSearch(problem):
 
     "*** YOUR CODE HERE ***"
     frontier, explored, s = Queue(), [], problem.getStartState()
-    frontier.push([(s,'',0)])
+    frontier.push([(s,'Stop',0)])
+    placed = [(s,'Stop',0)]
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
-        # print(p_last)
         if problem.isGoalState(p_last):
-            # print([state[1] for state in path[1:]])
             return [state[1] for state in path[1:]]
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
-            if neighbor[0] not in explored: frontier.push(path+[neighbor])
+            if neighbor[0] not in explored and neighbor[0] not in placed:
+                frontier.push(path+[neighbor])
+                placed.append(neighbor[0])
 
 
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
+    print
+    print
     frontier, s = PriorityQueue(), problem.getStartState()
-    path, explored, cost = [(s,'',0)], [], {}
-    priority = lambda pth: reduce(lambda x,y: x+y, map(lambda state: state[2],pth))
-    frontier.push(path, priority(path))
-    # path_cost[s] = priority(path)
+    path, explored, cost = [(s,'Stop',0)], [], {}
+    priority = lambda pth:  problem.getCostOfActions(map(lambda state: state[1], pth[1:]))
+    frontier.push(path, 0)
+    path_cost = {s: 0}
+    placed = [(s,'Stop',0)]
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -134,13 +138,13 @@ def uniformCostSearch(problem):
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
             next_path = path+[neighbor]
-            if neighbor[0] not in explored:
+            if neighbor[0] not in explored and neighbor[0] not in placed:
                 frontier.push(next_path,priority(next_path))
-            #     path_cost[neighbor] = priority(next_path)
-            # elif priority(next_path) < path_cost[neighbor]:
-            #     print 'hi'
-            #     frontier.push(next_path,priority(next_path))
-            #     path_cost[neighbor] = priority(next_path)
+                path_cost[neighbor[0]] = priority(next_path)
+                placed.append(neighbor[0])
+            elif priority(next_path) < path_cost[neighbor[0]]:
+                frontier.push(next_path,priority(next_path))
+                path_cost[neighbor[0]] = priority(next_path)
 
 def nullHeuristic(state, problem=None):
     """
@@ -153,9 +157,10 @@ def aStarSearch(problem, heuristic=nullHeuristic):
     "Search the node that has the lowest combined cost and heuristic first."
     "*** YOUR CODE HERE ***"
     frontier, s = PriorityQueue(), problem.getStartState()
-    path, explored, cost = [(s,'',0)], [], {}
-    priority = lambda pth: reduce(lambda x,y: x+y, map(lambda state: state[2],pth))+heuristic(pth[-1][0],problem)
-    frontier.push(path, priority(path))
+    path, explored, cost = [(s,'Stop',0)], [], {}
+    priority = lambda pth:  problem.getCostOfActions(map(lambda state: state[1], pth[1:]))+heuristic(pth[-1][0],problem)
+    frontier.push(path, 0)
+    path_cost, placed = {s: 0}, [(s,'Stop',0)]
     while not frontier.isEmpty():
         path = frontier.pop()
         p_last = path[-1][0]
@@ -164,8 +169,13 @@ def aStarSearch(problem, heuristic=nullHeuristic):
         explored.append(p_last)
         for neighbor in problem.getSuccessors(p_last):
             next_path = path+[neighbor]
-            if neighbor[0] not in explored:
+            if neighbor[0] not in explored and neighbor[0] not in placed:
                 frontier.push(next_path,priority(next_path))
+                path_cost[neighbor[0]] = priority(next_path)
+                placed.append(neighbor[0])
+            elif priority(next_path) < path_cost[neighbor[0]]:
+                frontier.push(next_path,priority(next_path))
+                path_cost[neighbor[0]] = priority(next_path)
 
 
 # Abbreviations
