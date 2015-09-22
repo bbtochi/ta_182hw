@@ -1,3 +1,7 @@
+"""
+PROBLEM SET 1 COMPLETED BY: TOCHI ONYENOKWE AND ALEX SAICH
+"""
+
 # searchAgents.py
 # ---------------
 # Licensing Information: Please do not distribute or publish solutions to this
@@ -35,7 +39,8 @@ import util
 import time
 import search
 import searchAgents
-import math
+from math import *
+from sys import *
 
 class GoWestAgent(Agent):
     "An agent that goes West until it can't."
@@ -282,11 +287,13 @@ class CornersProblem(search.SearchProblem):
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
         "*** YOUR CODE HERE ***"
-        return (self.startingPosition,(self.corners))
+        # state represented as (grid position, corners remaining with food)
+        return (self.startingPosition,self.corners)
 
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
         "*** YOUR CODE HERE ***"
+        # check to see if all corners have no food remaining
         return len(state[1])==0
 
     def getSuccessors(self, state):
@@ -311,10 +318,14 @@ class CornersProblem(search.SearchProblem):
             #   hitsWall = self.walls[nextx][nexty]
 
             "*** YOUR CODE HERE ***"
+            # current position and corners still with food
             pos, corners = state[0], list(state[1])
+
+            # find next state after taking action
             x,y = pos
             dx, dy = Actions.directionToVector(action)
             nextx, nexty = int(x + dx), int(y + dy)
+
             # if action is legal
             if not self.walls[nextx][nexty]:
                 next_pos = (nextx,nexty)
@@ -323,7 +334,6 @@ class CornersProblem(search.SearchProblem):
                 nextState = (next_pos,tuple(corners))
                 # add new state to successors
                 successors.append( (nextState,action,1) )
-
 
         self._expanded += 1
         return successors
@@ -359,15 +369,19 @@ def cornersHeuristic(state, problem):
     walls = problem.walls # These are the walls of the maze, as a Grid (game.py)
 
     "*** YOUR CODE HERE ***"
-    corners_left = list(state[1])
-    x1,y1 = state[0]
-    cost = 0
+    corners_left = list(state[1])   # corners remaining that have food
+    x1,y1 = state[0]    # coordinates of current cost
+    cost = 0    # cost estimate to be returned by heuristic
+
+    # find cost of path gotten by repeatedly moving to closest corner
     while corners_left != []:
-        dist = map(lambda corner: abs(x1 - corner[0]) + abs(y1 - corner[1]), corners_left)
-        minimum = dist[0]
-        for c in dist:
-            if c <= minimum: minimum = c
+        # list of distances to all remaining corners
+        distances = map(lambda corner: abs(x1 - corner[0]) + abs(y1 - corner[1]), corners_left)
+        minimum = distances[0]
+        for dist in distances:
+            if dist <= minimum: minimum = dist
         cost += minimum
+        # advance to closest corner
         x1,y1 = corners_left.pop(dist.index(minimum))
     return cost
 
@@ -461,28 +475,33 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
 
-    tree = [position]
-    cost = 0
+    "*** YOUR CODE HERE ***"
+    #function to get distance between two points in pacman grid
+    get_dist = lambda pt1,pt2: 0 if pt1 == None else sqrt(pow((pt1[0] - pt2[0]), 2) + pow((pt1[1]-pt2[1]), 2))
 
-    # we implemented a minmum spnning tree (MTS) using Prim's Algorithm
-    while len(tree) < len(foodGrid.asList()):
-        for food in foodGrid.asList():
-            if food in tree:
-                continue
+    # FIND COST OF MST OVER PACMAN AND FOOD POSITIONS USING PRIM'S ALG`
+    heap, food_left  = util.PriorityQueue(), foodGrid.asList()+[position]
+    dist, prev = {food: maxint for food in food_left}, {food: None for food in food_left}
+    dist[position], tree, mst_cost = 0, [], 0
+    heap.push(position,0)
 
-            x1,y1 = food
-            min_dist = 9999
-            next_node = None
-            for elt in tree:
-                x2,y2 = elt
-                dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
-                if dist < min_dist:
-                    min_dist = dist
-                    next_node = elt
-            cost += min_dist
-            tree.append(next_node)
-            break
-    return cost
+    while not heap.isEmpty():
+        node = heap.pop()
+        if node not in tree:
+            tree.append(node)
+            food_left.remove(node)
+            mst_cost+= get_dist(prev[node],node)
+
+            # for all food coins not in our mst
+            for food in food_left:
+                distance = get_dist(node, food)
+                if distance < dist[food]:
+                    # add food coin to heap with distance from current position as priority
+                    heap.push(food, distance)
+                    dist[food], prev[food] = distance, node
+    # return cost of MST
+    return mst_cost
+
 
 
 class ClosestDotSearchAgent(SearchAgent):
