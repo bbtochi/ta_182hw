@@ -282,11 +282,12 @@ class CornersProblem(search.SearchProblem):
     def getStartState(self):
         "Returns the start state (in your state space, not the full Pacman state space)"
         "*** YOUR CODE HERE ***"
-        return (self.startingPosition,(self.corners))
+        return (self.startingPosition,list(self.corners))
 
     def isGoalState(self, state):
         "Returns whether this search state is a goal state of the problem"
         "*** YOUR CODE HERE ***"
+        print(state[1])
         return len(state[1])==0
 
     def getSuccessors(self, state):
@@ -320,7 +321,7 @@ class CornersProblem(search.SearchProblem):
                 next_pos = (nextx,nexty)
                 # if new position is one of remaining corners
                 if next_pos in state[1]: corners.remove(next_pos)
-                nextState = (next_pos,tuple(corners))
+                nextState = (next_pos,corners)
                 # add new state to successors
                 successors.append( (nextState,action,1) )
 
@@ -461,39 +462,28 @@ def foodHeuristic(state, problem):
     """
     position, foodGrid = state
 
-    tree = []
+    tree = [position]
     cost = 0
 
-    # we implemented a minimum spanning tree (MST) using Prim's Algorithm
-    while len(tree) < len(foodGrid.asList())+1:
-        if tree == []:
-            if foodGrid.asList() != []:
-                tree.append(foodGrid.asList()[0])
-            else: break
-
-        min_dist = 9999
-        next_node = None
-
+    # we implemented a minmum spnning tree (MTS) using Prim's Algorithm
+    while len(tree) < len(foodGrid.asList()):
         for food in foodGrid.asList():
             if food in tree:
                 continue
 
             x1,y1 = food
-
+            min_dist = 9999
+            next_node = None
             for elt in tree:
                 x2,y2 = elt
                 dist = math.sqrt(math.pow((x1 - x2), 2) + math.pow((y1-y2), 2))
-                if dist < min_dist:
+                if dist < min_dist: 
                     min_dist = dist
-                    next_node = food
-
-        cost += min_dist
-        tree.append(next_node)
-            # break
-    # print(cost)
+                    next_node = elt
+            cost += min_dist
+            tree.append(next_node)
+            break
     return cost
-
-
 
 
 class ClosestDotSearchAgent(SearchAgent):
