@@ -382,7 +382,7 @@ def cornersHeuristic(state, problem):
             if dist <= minimum: minimum = dist
         cost += minimum
         # advance to closest corner
-        x1,y1 = corners_left.pop(dist.index(minimum))
+        x1,y1 = corners_left.pop(distances.index(minimum))
     return cost
 
 
