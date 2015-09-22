@@ -1,3 +1,7 @@
+"""
+PROBLEM SET 1 COMPLETED BY: TOCHI ONYENOKWE AND ALEX SAICH
+"""
+
 # search.py
 # ---------
 # Licensing Information: Please do not distribute or publish solutions to this
@@ -122,8 +126,6 @@ def breadthFirstSearch(problem):
 def uniformCostSearch(problem):
     "Search the node of least total cost first. "
     "*** YOUR CODE HERE ***"
-    print
-    print
     frontier, s = PriorityQueue(), problem.getStartState()
     path, explored, cost = [(s,'Stop',0)], [], {}
     priority = lambda pth:  problem.getCostOfActions(map(lambda state: state[1], pth[1:]))
