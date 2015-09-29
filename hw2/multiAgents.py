@@ -72,6 +72,7 @@ class ReflexAgent(Agent):
         newFood, curFood = successorGameState.getFood(), currentGameState.getFood()
         newGhostStates, curGhostStates = successorGameState.getGhostStates(), currentGameState.getGhostStates()
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
+        newUnscared, curUnscared = [g for g in newGhostStates if g.scaredTimer < 2.], [g for g in curGhostStates if g.scaredTimer < 2.]
 
         # print
         # print "Pacman Direction",(successorGameState.getPacmanState().getDirection())
@@ -89,42 +90,34 @@ class ReflexAgent(Agent):
         * Moves that get you closer to food should have higher scores
         * Might also want to consider direction of pacman and nearest ghost
         """
-        from math import sqrt
-        def euclidDistance(xy1,xy2):
-            return sqrt((xy1[0]-xy2[0])**2 + (xy1[1]-xy2[1])**2)
         # initialize score
         score = successorGameState.getScore()
 
-        # get distance to closest ghost in new gamestate
-        curGhostDist = min( map(lambda x: manhattanDistance(curPos, x.getPosition()), curGhostStates) )
-        newGhostDist = min( map(lambda x: manhattanDistance(newPos, x.getPosition()), newGhostStates) )
-
-        # get distance to closest food in new and current gamestates
-        curFoodDist = min( map(lambda x: euclidDistance(newPos, x), curFood.asList()) )
-        if (currentGameState.hasFood(*newPos)):
-            newFoodDist = 0
-        else:
+        # get reciprocal distance to closest food in new and current gamestates
+        newFoodDist = 1
+        # if new position doesn't have food on it
+        if not (currentGameState.hasFood(*newPos)):
             newFoodDist = min( map(lambda x: manhattanDistance(newPos, x), newFood.asList()) )
+        score += 1./newFoodDist
+
+        # set distance to closest unfrightened ghost in current and new gamestate as 0
+        curGhostDist = newGhostDist = 1000
+        # if there are any unscared ghosts in current or new gamestate
+        if len(curUnscared) != 0:
+            curGhostDist = min( map(lambda x: manhattanDistance(curPos, x.getPosition()), curUnscared) )
+        if len(newUnscared) != 0:
+            newGhostDist = min( map(lambda x: manhattanDistance(newPos, x.getPosition()), newUnscared) )
 
         # if pacman is in danger zone (too close to ghost)
         if curGhostDist < 3.:
-            # if next position gets you even closer to a ghost
+            # if next position gets you further away form nearest unscared ghost
             if newGhostDist > curGhostDist:
                 score+=60.
-            if newGhostDist < curGhostDist:
+            else:
                 score-=60.
         # else if next move gets you in danger zone
         elif newGhostDist < 3.:
-            # if ghost is moving towards pacman
             score-=40.
-            # if ghost is moving away from pacman
-
-        # if the next action takes you further away from nearest food
-        if newFoodDist > curFoodDist:
-            score-=40.
-        # elif newFoodDist < curFoodDist:
-        #     score+=40.
-
 
         return score
 
