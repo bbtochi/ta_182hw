@@ -257,7 +257,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                             val = (a,util)
                     
                     alpha = max(float(alpha), float(val[1]))
-                    if val[1] >= beta: return (a, val[1])
+                    if val[1] > beta: return (a, val[1])
 
                 return val
             else:
@@ -277,9 +277,9 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
                     else:
                         if float(val[1]) > float(util):
                             val = (a,util)
-                            
+
                     beta = min(float(beta), float(val[1]))
-                    if val[1] <= alpha: return (a, val[1])
+                    if val[1] < alpha: return (a, val[1])
                 
                 return val
 
