@@ -213,10 +213,6 @@ class MinimaxAgent(MultiAgentSearchAgent):
                     if val == 'Stop':
                         val = (a,util)
                     else:
-                        if type(val[1]) == str:
-                          print val[1]
-                        if type(util) == str:
-                          print util
                         if float(val[1]) > float(util):
                             val = (a,util)
                 return val
@@ -235,7 +231,59 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
           Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        alpha = -9000000.
+        beta = 9000000.
+        numAgents = gameState.getNumAgents()
+
+
+        def ab(alpha, beta, agent,state,curDepth):
+            if curDepth == 0:
+                return ('Stop',self.evaluationFunction(state))
+            
+            if agent == 0:
+                actions = state.getLegalActions(0)
+                val = 'Stop'
+                if len(actions) == 0:
+                    val = ('Stop', self.evaluationFunction(state))
+
+                for a in actions:
+                    successor = state.generateSuccessor(agent,a)
+                    util = ab(alpha, beta, 1,successor,curDepth)[1]
+                    
+                    if val == 'Stop':
+                        val = (a,util)
+                    else:
+                        if float(val[1]) < float(util):
+                            val = (a,util)
+                    
+                    alpha = max(float(alpha), float(val[1]))
+                    if val[1] >= beta: return (a, val[1])
+
+                return val
+            else:
+                actions = state.getLegalActions(agent)
+                val = 'Stop'
+                if agent == numAgents-1: curDepth-=1
+
+                if len(actions) == 0:
+                    val = ('Stop', self.evaluationFunction(state))
+
+                for a in actions:
+                    successor = state.generateSuccessor(agent,a)
+                    util = ab(alpha, beta, (agent+1)%numAgents,successor,curDepth)[1]
+                    
+                    if val == 'Stop':
+                        val = (a,util)
+                    else:
+                        if float(val[1]) > float(util):
+                            val = (a,util)
+                            
+                    beta = min(float(beta), float(val[1]))
+                    if val[1] <= alpha: return (a, val[1])
+                
+                return val
+
+        return ab(alpha, beta, 0, gameState,self.depth)[0]
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
