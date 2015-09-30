@@ -185,25 +185,40 @@ class MinimaxAgent(MultiAgentSearchAgent):
                 return ('Stop',self.evaluationFunction(state))
             if agent == 0:
                 actions = state.getLegalActions(0)
-                val = ('hi',-9000000000.)
+                val = 'Stop'
+                if len(actions) == 0:
+                    val = ('Stop', self.evaluationFunction(state))
+
                 for a in actions:
                     successor = state.generateSuccessor(agent,a)
                     util = minimax(1,successor,curDepth)[1]
-                    if val[1] < util:
-                        print 'here!'
+                    if val == 'Stop':
                         val = (a,util)
                     else:
-                        print "Not greater than smallest int??", val[1], util
+                        if float(val[1]) < float(util):
+                            val = (a,util)
+
                 return val
             else:
                 actions = state.getLegalActions(agent)
-                val = ('hi',float(maxint))
+                val = 'Stop'
                 if agent == numAgents-1: curDepth-=1
+
+                if len(actions) == 0:
+                    val = ('Stop', self.evaluationFunction(state))
+
                 for a in actions:
                     successor = state.generateSuccessor(agent,a)
                     util = minimax((agent+1)%numAgents,successor,curDepth)[1]
-                    if val[1] > util:
+                    if val == 'Stop':
                         val = (a,util)
+                    else:
+                        if type(val[1]) == str:
+                          print val[1]
+                        if type(util) == str:
+                          print util
+                        if float(val[1]) > float(util):
+                            val = (a,util)
                 return val
 
         return minimax(0,gameState,self.depth)[0]
