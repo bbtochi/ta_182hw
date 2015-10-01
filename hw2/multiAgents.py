@@ -70,9 +70,8 @@ class ReflexAgent(Agent):
         # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
         newPos, curPos = successorGameState.getPacmanPosition(), currentGameState.getPacmanPosition()
-        newFood, curFood = successorGameState.getFood(), currentGameState.getFood()
+        newFood = successorGameState.getFood()
         newGhostStates, curGhostStates = successorGameState.getGhostStates(), currentGameState.getGhostStates()
-        newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
         newUnscared, curUnscared = [g for g in newGhostStates if g.scaredTimer < 2.], [g for g in curGhostStates if g.scaredTimer < 2.]
 
 
@@ -84,32 +83,32 @@ class ReflexAgent(Agent):
         * Moves that get you closer to food should have higher scores
         * Might also want to consider direction of pacman and nearest ghost
         """
-        # initialize score
+        # initialize score to be current game score
         score = successorGameState.getScore()
 
-        # get reciprocal distance to closest food in new and current gamestates
-        newFoodDist = 1
+        # get distance to closest food in the new gamestate
+        newFoodDist = 1.         # if new pos has food on it this will remain 1
         # if new position doesn't have food on it
         if not (currentGameState.hasFood(*newPos)):
             newFoodDist = min( map(lambda x: manhattanDistance(newPos, x), newFood.asList()) )
         score += 1./newFoodDist
 
-        # set distance to closest unfrightened ghost in current and new gamestate as 0
+        # initialize distance to closest unfrightened ghost in current and new gamestate
         curGhostDist = newGhostDist = 1000
-        # if there are any unscared ghosts in current or new gamestate
+        # if there are any unscared ghosts in current or new gamestate reset distance to closest one
         if len(curUnscared) != 0:
             curGhostDist = min( map(lambda x: manhattanDistance(curPos, x.getPosition()), curUnscared) )
         if len(newUnscared) != 0:
             newGhostDist = min( map(lambda x: manhattanDistance(newPos, x.getPosition()), newUnscared) )
 
-        # if pacman is in danger zone (too close to ghost)
+        # if pacman is in danger zone (i.e. too close to ghost)
         if curGhostDist < 3.:
             # if next position gets you further away form nearest unscared ghost
             if newGhostDist > curGhostDist:
                 score+=60.
             else:
                 score-=60.
-        # else if next move gets you in danger zone
+        # else if next move gets you into danger zone
         elif newGhostDist < 3.:
             score-=40.
 
@@ -168,37 +167,32 @@ class MinimaxAgent(MultiAgentSearchAgent):
             Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
+        # number of agents in current gamestate
         numAgents = gameState.getNumAgents()
 
+        # functiong implementing a generalized minimax algorithm
         def minimax(agent,state,curDepth):
+            # if at the limit of specified depth
             if curDepth == 0:
+                # return score of current state
                 return ('',self.evaluationFunction(state))
-            if agent == 0:
-                actions = state.getLegalActions(0)
-                val = ('',float(-1*maxint))
-                if len(actions) == 0:
-                    val = ('', self.evaluationFunction(state))
-                else:
-                    for a in actions:
-                        successor = state.generateSuccessor(agent,a)
-                        util = minimax(1,successor,curDepth)[1]
-                        if val[1] < util:
-                            val = (a,util)
-                return val
-            else:
-                actions = state.getLegalActions(agent)
-                val = ('',float(maxint))
-                if len(actions) == 0:
-                    val = ('', self.evaluationFunction(state))
-                else:
-                    if agent == numAgents-1: curDepth-=1
-                    for a in actions:
-                        successor = state.generateSuccessor(agent,a)
-                        util = minimax((agent+1)%numAgents,successor,curDepth)[1]
-                        if val[1] > util:
-                            val = (a,util)
-                return val
 
+            # set the extreme value based on what agent has a turn
+            val = ('',-1.*float(maxint)) if agent == 0 else ('',float(maxint))
+
+            actions = state.getLegalActions(agent)
+            # if there are no possible actions return score of current state
+            if len(actions) == 0:
+                val = ('', self.evaluationFunction(state))
+            else:
+                # if we are at the last agent update the depth for the next turn
+                if agent == numAgents-1: curDepth-=1
+                for a in actions:
+                    successor, nextAgent = state.generateSuccessor(agent,a), (agent+1)%numAgents
+                    util = minimax(nextAgent,successor,curDepth)[1]
+                    # based on what agent has a turn, update the current best 'utility'
+                    val = (a,max(val[1],util)) if agent == 0 else (a,min(val[1],util))
+            return val
         return minimax(0,gameState,self.depth)[0]
 
 
@@ -215,7 +209,37 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         "*** YOUR CODE HERE ***"
         numAgents = gameState.getNumAgents()
         Alpha, Beta = float(-1*maxint), float(maxint)
-
+        # # functiong implementing a generalized minimax algorithm
+        # def AlphaBetaMax(agent,state,curDepth,alpha,beta):
+        #     # if at the limit of specified depth
+        #     if curDepth == 0:
+        #         # return score of current state
+        #         return ('',self.evaluationFunction(state))
+        #
+        #     # set the extreme value based on what agent has a turn
+        #     val = ('',-1.*float(maxint)) if agent == 0 else ('',float(maxint))
+        #
+        #     actions = state.getLegalActions(agent)
+        #     # if there are no possible actions return score of current state
+        #     if len(actions) == 0:
+        #         val = ('', self.evaluationFunction(state))
+        #     else:
+        #         # if we are at the last agent update the depth for the next turn
+        #         if agent == numAgents-1: curDepth-=1
+        #         for a in actions:
+        #             successor, nextAgent = state.generateSuccessor(agent,a), (agent+1)%numAgents
+        #             util = AlphaBetaMax(nextAgent,successor,curDepth,alpha,beta)[1]
+        #             # based on what agent has a turn, update the current best 'utility'
+        #             if agent == 0:
+        #                 val = (a,max(val[1],util))
+        #                 if val[1] > beta: return (a, val[1])
+        #                 alpha = max(alpha,val[1])
+        #             else:
+        #                 val = (a,min(val[1],util))
+        #                 if val[1] < alpha: return (a, val[1])
+        #                 beta = min(beta,val[1])
+        #     return val
+        #
         def AlphaBetaMax(agent,state,curDepth,alpha,beta):
             if curDepth == 0:
                 return ('',self.evaluationFunction(state))
@@ -299,20 +323,28 @@ def betterEvaluationFunction(currentGameState):
       Your extreme ghost-hunting, pellet-nabbing, food-gobbling, unstoppable
       evaluation function (question 5).
 
-      DESCRIPTION: <write something here so we know what you did>
+      DESCRIPTION: This code simply runs the reflex agent evaluation function
+      we wrote for all possible actions at any given state and takes the average
+      value of the scores returned. If there are no possible actiona at a given
+      state we return the current score. A little surprised this worked straight
+      away but I guess the original evaluation function was pretty good. The
+      reasoning behind that is explained in the comments.
+
     """
     "*** YOUR CODE HERE ***"
     """
-        THOUGHTS
+        INITIAL THOUGHTS
         * If a state is closer to more food then it should have a higher score
         * If a state is too close to a ghost it should have a lower score
         * Maybe take the average over all the scores of each action
     """
-    # print dir(currentGameState)
-    scores, value, actions = [], 0, currentGameState.getLegalActions()
-    # print "LEGAL ACTIONS", len(actions)
+
+    scores, actions = [], currentGameState.getLegalActions()
+
+    # if there are no legal actions return score of current state
     if len(actions) == 0:
         return currentGameState.getScore()
+
     for action in actions:
     # Useful information you can extract from a GameState (pacman.py)
         successorGameState = currentGameState.generatePacmanSuccessor(action)
@@ -325,7 +357,7 @@ def betterEvaluationFunction(currentGameState):
         score = successorGameState.getScore()
 
         # get reciprocal distance to closest food in new and current gamestates
-        newFoodDist = 1
+        newFoodDist = 1.
         # if new position doesn't have food on it
         if not (currentGameState.hasFood(*newPos)):
             newFoodDist = min( map(lambda x: manhattanDistance(newPos, x), newFood.asList()) )
@@ -349,10 +381,10 @@ def betterEvaluationFunction(currentGameState):
         # else if next move gets you in danger zone
         elif newGhostDist < 3.:
             score-=40.
-
         scores.append(score)
-    value = reduce(lambda x,y: x+y,scores)/float(len(scores))
-    return value
+
+    # take the average over scores for all possible actions
+    return reduce(lambda x,y: x+y,scores)/float(len(scores))
 
 # Abbreviation
 better = betterEvaluationFunction
