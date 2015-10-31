@@ -1,3 +1,7 @@
+"""
+THIS PSET WAS COMPLETED BY TOCHI ONYENOKWE AND ALEX SAICH
+"""
+
 from copy import deepcopy
 import timeit
 import sys, os
@@ -121,7 +125,7 @@ class Sudoku:
 
         return domain
 
-    # PART 2
+    #PART 2
     def updateFactor(self, factor_type, i):
         """
         IMPLEMENT FOR PART 2
@@ -130,21 +134,17 @@ class Sudoku:
         `i` is an index between 0 and 8.
         """
 
-        labelsLeft, getVals = range(1,10), [self.box,self.row,self.col]
-        values = getVals[factor_type-1](i)
+        self.factorRemaining[(factor_type,i)], getVals = range(1,10), [self.box,self.row,self.col]
+        values, key = getVals[factor_type-1](i), (factor_type,i)
 
-        orderedVals =  [None]*9
-        for val in values:
-            if val: orderedVals[val-1] = val
-
-        conflict = crossOff(orderedVals, labelsLeft)
-        for val in values:
-            if val: labelsLeft[(val-1)] = None
-
-        self.factorRemaining[factor_type, i] = labelsLeft
-        self.factorNumConflicts[factor_type, i] = conflict
+        # if key in self.factorNumConflicts:
+        #     print "Before update:",self.factorNumConflicts[key]
+        self.factorNumConflicts[key] = crossOff(self.factorRemaining[key],values)
+        # print "After update:",self.factorNumConflicts[key]
+        # print
 
         return
+
 
 
     def updateAllFactors(self):
@@ -201,7 +201,6 @@ class Sudoku:
         for val in curr_dom:
             elt = self.setVariable(r, c, val)
             lst.append(elt)
-
         return lst
 
     def getAllSuccessors(self):
@@ -219,7 +218,7 @@ class Sudoku:
         IMPLEMENT IN PART 4
         Returns true if all variables have non-empty domains.
         """
-        board_len = range(0,9)
+        board_len = range(9)
 
         for i in board_len:
             row = self.row(i)
@@ -282,7 +281,7 @@ class Sudoku:
         "Returns the total number of conflicts"
         return sum(self.factorNumConflicts.values())
 
-    # PART 6
+# PART 6
     def randomRestart(self):
         """
         IMPLEMENT FOR PART 6
@@ -290,8 +289,30 @@ class Sudoku:
         with all the row factors being held consistent.
         Should call `updateAllFactors` at end.
         """
-        raise NotImplementedError()
-        # self.updateAllFactors()
+        rows = {}
+        for key in self.fixedVariables:
+            row, col = key
+            if row in rows:
+                rows[row].append(col)
+            else:
+                rows[row] = [col]
+
+        vals = range(1,10)
+        for row in range(9):
+            random.shuffle(vals)
+            if row in rows:
+                v = deepcopy(vals)
+                for col in rows[row]:
+                    val = self.board[row][col]
+                    # print "column", col, 'value', val
+                    idx = v.index(val)
+                    v[idx], v[col] = v[col], v[idx]
+                # print "row",v
+                self.board[row] = v
+            else:
+                self.board[row] = deepcopy(vals)
+        self.updateAllFactors()
+        print
 
     # PART 7
     def randomSwap(self):
@@ -300,8 +321,22 @@ class Sudoku:
         Returns two random variables that can be swapped without
         causing a row factor conflict.
         """
-        raise NotImplementedError()
 
+        curr_row = random.randint(0,8)
+        same_val = True
+        while same_val:
+            i, j = random.randint(0,8), random.randint(0,8)
+
+            if i == j:
+                continue
+
+            if (curr_row, i) in self.fixedVariables  \
+                or (curr_row, j) in self.fixedVariables:
+                continue
+
+            same_val = False
+
+        return (curr_row, i), (curr_row, j)
 
     # PART 8
     def gradientDescent(self, variable1, variable2):
@@ -309,7 +344,23 @@ class Sudoku:
         IMPLEMENT FOR PART 8
         Decide if we should swap the values of variable1 and variable2.
         """
-        raise NotImplementedError()
+        old_confs = self.numConflicts()
+        # print "old_confs", old_confs
+        self.modifySwap(variable1, variable2)
+        self.updateAllFactors()
+
+        new_confs = self.numConflicts()
+        # print "new_confs", new_confs
+        n = random.randint(1,1000)
+
+        if new_confs <= old_confs:
+            return
+        elif n == 1:
+            return
+        else:
+            self.modifySwap(variable2, variable1)
+            self.updateAllFactors()
+            return
 
 
     ### IGNORE - PRINTING CODE
@@ -497,34 +548,36 @@ def solveCSP(problem):
     return None
 
 def solveLocal(problem):
-    for r in range(1):
-        problem.randomRestart()
-        state = problem
-        for i in range(100000):
-            originalConflicts = state.numConflicts()
+        for r in range(1):
+            problem.randomRestart()
+            state = problem
+            for i in range(100000):
+                originalConflicts = state.numConflicts()
 
-            v1, v2 = state.randomSwap()
-
-            state.gradientDescent(v1, v2)
-
-            if args.debug_ipython:
-                from time import sleep
-                from IPython import display
-                state.lastMoves = [s1, s2]
-                display.display(display.HTML(state.prettyprinthtml()))
-                display.clear_output(True)
-                sleep(0.5)
+                v1, v2 = state.randomSwap()
 
 
+                state.gradientDescent(v1, v2)
+                print '('+str(i)+')',"CONFLICTS: ",state.numConflicts()
 
-            if state.numConflicts() == 0:
-                return state
-                break
+                if args.debug_ipython:
+                    from time import sleep
+                    from IPython import display
+                    state.lastMoves = [s1, s2]
+                    display.display(display.HTML(state.prettyprinthtml()))
+                    display.clear_output(True)
+                    sleep(0.5)
 
-            if args.debug:
-                os.system("clear")
-                print state
-                raw_input("Press Enter to continue...")
+
+
+                if state.numConflicts() == 0:
+                    return state
+                    break
+
+                if args.debug:
+                    os.system("clear")
+                    print state
+                    raw_input("Press Enter to continue...")
 
 
 
